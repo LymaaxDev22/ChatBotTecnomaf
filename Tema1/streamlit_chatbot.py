@@ -229,18 +229,10 @@ st.markdown("""
 @st.cache_data
 def cargar_catalogo_pdf():
     """Extrae la tabla de productos del PDF"""
-    
     try:
-        # ✅ RUTA RELATIVA - Funciona en Streamlit Cloud
         ruta_pdf = "catalogo.pdf"
         
-        # Debug: Mostrar información del entorno (opcional, comentar después)
-        # st.write("📂 Directorio actual:", os.getcwd())
-        # st.write("📄 Archivos:", os.listdir('.'))
-        
         if not os.path.exists(ruta_pdf):
-            st.error(f"❌ No se encontró el archivo: {ruta_pdf}")
-            st.info(f"📍 Buscando en: {os.path.abspath(ruta_pdf)}")
             return pd.DataFrame()
         
         productos = []
@@ -292,14 +284,10 @@ def cargar_catalogo_pdf():
         
         if not df.empty:
             df = df[df['descripcion'].notna() & (df['descripcion'] != '')]
-            st.success(f"✅ Catálogo cargado: {len(df)} productos")
-        else:
-            st.warning("⚠️ No se encontraron productos en el PDF")
         
         return df
     
     except Exception as e:
-        st.error(f"❌ Error al cargar el PDF: {str(e)}")
         return pd.DataFrame()
 
 # Función para formatear el catálogo completo
@@ -372,20 +360,15 @@ st.markdown('<div style="text-align: center;"><span class="badge-premium">💎 A
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Configurar API Key de Google (usar secrets en producción)
+# Configurar API Key de Google
 if "GOOGLE_API_KEY" in st.secrets:
     os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
 
 # Modelo fijo
-try:
-    chat_model = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        temperature=0.7
-    )
-except Exception as e:
-    st.error(f"❌ Error al inicializar el modelo: {str(e)}")
-    st.info("💡 Asegúrate de configurar GOOGLE_API_KEY en los secrets de Streamlit Cloud")
-    st.stop()
+chat_model = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash",
+    temperature=0.7
+)
 
 # Obtener información completa de productos
 info_productos = obtener_info_productos()
@@ -485,13 +468,13 @@ if pregunta:
     # Generar respuesta con animación
     with st.chat_message("assistant", avatar="⚙️"):
         with st.spinner("🔍 Consultando catálogo TECNOMAF..."):
-            try:
-                respuesta = cadena.invoke({"mensajes": st.session_state.mensajes})
-                st.markdown(respuesta.content)
-                st.session_state.mensajes.append(respuesta)
-            except Exception as e:
-                st.error(f"❌ Error al generar respuesta: {str(e)}")
+            respuesta = cadena.invoke({"mensajes": st.session_state.mensajes})
+        
+        # Mostrar respuesta
+        st.markdown(respuesta.content)
     
+    # Guardar respuesta
+    st.session_state.mensajes.append(respuesta)
     st.rerun()
 
 # Footer premium
